@@ -92,8 +92,8 @@ class main(QWidget):
         ### /// ###
         mainLayout = QVBoxLayout()
 
-        self.photoViewer = ImageLabel(1)
-        mainLayout.addWidget(self.photoViewer)
+        self.photoViewer_ENC_IPT = ImageLabel(1)
+        mainLayout.addWidget(self.photoViewer_ENC_IPT)
 
         self.image2_copy = QLabel(self.ta1)
         self.image2_copy.move(18, 16)
@@ -128,8 +128,8 @@ class main(QWidget):
         ### /// ###
         mainLayout = QVBoxLayout()
 
-        self.photoViewer = ImageLabel(2)
-        mainLayout.addWidget(self.photoViewer)
+        self.photoViewer_ENC_PL = ImageLabel(2)
+        mainLayout.addWidget(self.photoViewer_ENC_PL)
 
         self.image_copy2 = QLabel(self.ta1)
         self.image_copy2.move(18, 120)
@@ -233,8 +233,8 @@ class main(QWidget):
         ### /// ###
         mainLayout = QVBoxLayout()
 
-        self.photoViewer = ImageLabel(3)
-        mainLayout.addWidget(self.photoViewer)
+        self.photoViewer_DEC_IPT = ImageLabel(3)
+        mainLayout.addWidget(self.photoViewer_DEC_IPT)
 
         self.image2_copy_copy = QLabel(self.ta2)
         self.image2_copy_copy.move(18, 16)
@@ -371,14 +371,23 @@ class main(QWidget):
             main.gui.ltext1.setText(open())
             ENC_IMG_IPT = main.gui.ltext1.text()
             main.gui.text3.appendPlainText("[Encode] input > " + ENC_IMG_IPT)
-            if ENC_IMG_IPT == '.jpg':
-                ImageLabel(1).setPixmap(QPixmap(ENC_IMG_IPT).scaled(75, 75, Qt.KeepAspectRatio, Qt.FastTransformation))
+            # Get file name and extension
+            file_name, file_extension = os.path.splitext(ENC_IMG_IPT)
+            if file_extension == '.jpg':
+                self.photoViewer_ENC_IPT.set_image(ENC_IMG_IPT)
             else:
-                ImageLabel(1).setPixmap(QPixmap(ENC_IMG_IPT))
+                self.photoViewer_ENC_IPT.set_image(IMG_BLANK)
+
         elif name == 'b3c':
             main.gui.ltext1_copy.setText(open())
             ENC_IMG_PL = main.gui.ltext1_copy.text()
             main.gui.text3.appendPlainText("[Encode] payload > " + ENC_IMG_PL)
+            file_name, file_extension = os.path.splitext(ENC_IMG_PL)
+            if file_extension == '.jpg':
+                self.photoViewer_ENC_PL.set_image(ENC_IMG_PL)
+            else:
+                self.photoViewer_ENC_PL.set_image(IMG_BLANK)
+
         elif name == 'b3cc':
             main.gui.ltext1_copy_copy_copy.setText(close())
             ENC_IMG_OUT = main.gui.ltext1_copy_copy_copy.text()
@@ -387,6 +396,11 @@ class main(QWidget):
             main.gui.ltext1_copy_copy.setText(open())
             DEC_IMG_IPT = main.gui.ltext1_copy_copy.text()
             main.gui.text3.appendPlainText("[Decode] input > " + DEC_IMG_IPT)
+            file_name, file_extension = os.path.splitext(DEC_IMG_IPT)
+            if file_extension == '.jpg':
+                self.photoViewer_ENC_PL.set_image(DEC_IMG_IPT)
+            else:
+                self.photoViewer_ENC_PL.set_image(IMG_BLANK)
         elif name == 'b3cccc':
             main.gui.ltext1_copy_copy_copy_copy.setText(close())
             DEC_IMG_OUT = main.gui.ltext1_copy_copy_copy_copy.text()
