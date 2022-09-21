@@ -1,3 +1,6 @@
+# pip install PySide2
+# pip install pyqtdarktheme
+# pip install Pillow
 from ssl import create_default_context
 from PySide2 import QtCore
 from PySide2.QtWidgets import *
@@ -9,6 +12,12 @@ from PIL import Image
 #################################
 # !! MODIFY VALUES HERE ONLY !! #
 #################################
+
+# File Extensions
+FE_IMG = ['.jpg','.jpeg','.bmp','.png']
+FE_DOC = ['.docx','.txt','.xls','.xlsx']
+FE_AUD = ['.mp3','.mp4','.wav']
+# Path for non-images
 IMG_BLANK = 'file.png'
 ENC_IMG_IPT = ''
 ENC_IMG_PL = ''
@@ -312,7 +321,7 @@ class main(QWidget):
         main.gui.text3_logs = "[ACW 1.0 Coursework - Steganography]"
         main.gui.text3 = QPlainTextEdit(self.group4)
         main.gui.text3.setPlainText(main.gui.text3_logs)
-        main.gui.text3.appendPlainText("Loading current directory...")
+        main.gui.text3.appendPlainText("[File Explorer] Loading current directory...")
         main.gui.text3.move(20, 400)
         main.gui.text3.resize(690, 150)
         main.gui.text3.setCursor(QtCore.Qt.ArrowCursor)
@@ -362,31 +371,33 @@ class main(QWidget):
     # /// /// #
     def browsefiles(self, name):
         def open():
-            fname = QFileDialog.getOpenFileName(self, 'Select File', str(QtCore.QDir.currentPath))
+            fname = QFileDialog.getOpenFileName(self, 'Select File', os.path.dirname(__file__))
             return fname[0]
         def close():
-            fname = QFileDialog.getSaveFileName(self, 'Select File', str(QtCore.QDir.currentPath))
+            fname = QFileDialog.getSaveFileName(self, 'Select File', os.path.dirname(__file__))
             return fname[0]
         if name == 'b3':
             main.gui.ltext1.setText(open())
             ENC_IMG_IPT = main.gui.ltext1.text()
-            main.gui.text3.appendPlainText("[Encode] input > " + ENC_IMG_IPT)
-            # Get file name and extension
-            file_name, file_extension = os.path.splitext(ENC_IMG_IPT)
-            if file_extension == '.jpg':
-                self.photoViewer_ENC_IPT.set_image(ENC_IMG_IPT)
-            else:
-                self.photoViewer_ENC_IPT.set_image(IMG_BLANK)
+            if ENC_IMG_IPT:
+                main.gui.text3.appendPlainText("[Encode] input > " + ENC_IMG_IPT)
+                # Get file name and extension
+                file_name, file_extension = os.path.splitext(ENC_IMG_IPT)
+                if file_extension.lower() in FE_IMG:
+                    self.photoViewer_ENC_IPT.set_image(ENC_IMG_IPT)
+                else:
+                    self.photoViewer_ENC_IPT.set_image(IMG_BLANK)
 
         elif name == 'b3c':
             main.gui.ltext1_copy.setText(open())
             ENC_IMG_PL = main.gui.ltext1_copy.text()
-            main.gui.text3.appendPlainText("[Encode] payload > " + ENC_IMG_PL)
-            file_name, file_extension = os.path.splitext(ENC_IMG_PL)
-            if file_extension == '.jpg':
-                self.photoViewer_ENC_PL.set_image(ENC_IMG_PL)
-            else:
-                self.photoViewer_ENC_PL.set_image(IMG_BLANK)
+            if ENC_IMG_PL:
+                main.gui.text3.appendPlainText("[Encode] payload > " + ENC_IMG_PL)
+                file_name, file_extension = os.path.splitext(ENC_IMG_PL)
+                if file_extension.lower() in FE_IMG:
+                    self.photoViewer_ENC_PL.set_image(ENC_IMG_PL)
+                else:
+                    self.photoViewer_ENC_PL.set_image(IMG_BLANK)
 
         elif name == 'b3cc':
             main.gui.ltext1_copy_copy_copy.setText(close())
@@ -395,12 +406,13 @@ class main(QWidget):
         elif name == 'b3ccc':
             main.gui.ltext1_copy_copy.setText(open())
             DEC_IMG_IPT = main.gui.ltext1_copy_copy.text()
-            main.gui.text3.appendPlainText("[Decode] input > " + DEC_IMG_IPT)
-            file_name, file_extension = os.path.splitext(DEC_IMG_IPT)
-            if file_extension == '.jpg':
-                self.photoViewer_ENC_PL.set_image(DEC_IMG_IPT)
-            else:
-                self.photoViewer_ENC_PL.set_image(IMG_BLANK)
+            if DEC_IMG_IPT:
+                main.gui.text3.appendPlainText("[Decode] input > " + DEC_IMG_IPT)
+                file_name, file_extension = os.path.splitext(DEC_IMG_IPT)
+                if file_extension.lower() in FE_IMG:
+                    self.photoViewer_ENC_PL.set_image(DEC_IMG_IPT)
+                else:
+                    self.photoViewer_ENC_PL.set_image(IMG_BLANK)
         elif name == 'b3cccc':
             main.gui.ltext1_copy_copy_copy_copy.setText(close())
             DEC_IMG_OUT = main.gui.ltext1_copy_copy_copy_copy.text()
@@ -439,7 +451,7 @@ class ImageLabel(QLabel):
             file_path = event.mimeData().urls()[0].toLocalFile()
             # Get file name and extension
             file_name, file_extension = os.path.splitext(file_path)
-            if file_extension == '.jpg':
+            if file_extension.lower() in FE_IMG:
                 self.set_image(file_path)
             else:
                 self.set_image(IMG_BLANK)
@@ -473,7 +485,7 @@ class ImageLabel(QLabel):
     
     def mouseDoubleClickEvent(self, event):
         if not self.cUrl:
-            pass
+            main.gui.text3.appendPlainText("[Error] No files in drop box currently! ")
         else:
             img = Image.open(self.cUrl)
             img.show()
