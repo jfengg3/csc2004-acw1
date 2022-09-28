@@ -344,18 +344,18 @@ class main(QWidget):
     # Encode logic
     # /// /// #
     def encode(self):
-
-        if (os.path.getsize(main.ENC_IMG_PL) > os.path.getsize(main.ENC_IMG_IPT)):
-            main.gui.text3.appendPlainText("[Error] Payload image size is larger than the object")
-        else:
-            self.button4.setEnabled(False)
-            secret_data = open(main.ENC_IMG_PL,"r")
-            data = secret_data.read()
-            # encode the data into the image
-            encoded_image = s_encode(image_name=main.ENC_IMG_IPT, secret_data=data)
-            secret_data.close()
-            # save the output image (encoded image)
-            cv2.imwrite(main.ENC_IMG_OUT, encoded_image)
+        
+            if (os.path.getsize(main.ENC_IMG_PL) > os.path.getsize(main.ENC_IMG_IPT)):
+                main.gui.text3.appendPlainText("[Error] Payload image size is larger than the object")
+            else:
+                """ self.button4.setEnabled(False) """
+                secret_data = open(main.ENC_IMG_PL,"r")
+                data = secret_data.read()
+                # encode the data into the image
+                encoded_image = s_encode(image_name=main.ENC_IMG_IPT, secret_data=data)
+                secret_data.close()
+                # save the output image (encoded image)
+                cv2.imwrite(main.ENC_IMG_OUT, encoded_image)
     
     # /// /// #
     # Decode logic
