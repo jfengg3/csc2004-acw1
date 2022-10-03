@@ -1,6 +1,7 @@
 # pip install PySide2
 # pip install pyqtdarktheme
 # pip install Pillow
+# pip install ffmpeg
 from ssl import create_default_context
 from PySide2 import QtCore
 from PySide2.QtWidgets import *
@@ -9,8 +10,11 @@ import sys, os, qdarktheme
 from functools import partial
 from PIL import Image
 import cv2, numpy as np
-
-from stego import encode as s_encode, decode as s_decode
+# Import backend logic
+from logic.audio import encode_audio, decode_audio
+from logic.video import VideoCoder
+from logic.image import Encoder, Decoder, get_stream
+from logic.image2 import encode_png, decode_png
 
 class main(QWidget):
     
@@ -21,16 +25,18 @@ class main(QWidget):
     # File Extensions
     FE_IMG = ['.jpg','.jpeg','.bmp','.png']
     FE_DOC = ['.docx','.txt','.xls','.xlsx']
-    FE_AUD = ['.mp3','.mp4','.wav']
-    FE_ALL = FE_IMG+FE_DOC+FE_AUD
-    # Path for non-images
-    IMG_BLANK = 'file.png'
+    FE_AUD = ['.mp3','.wav']
+    FE_VID = ['.mp4', '.avi']
+    FE_ALL = FE_IMG+FE_DOC+FE_AUD+FE_VID
+    # Paths
+    IMG_BLANK = 'res/file.png'
     ENC_IMG_IPT = ''
     ENC_IMG_OUT = ''
     ENC_IMG_PL = ''
+    ENC_NUM_OF_LSB = 0
     DEC_IMG_IPT = ''      
     DEC_IMG_OUT = ''
-    NUM_OF_LSB = 0
+    DEC_NUM_OF_LSB = 0
 
     #################################
     # !! DO NOT TOUCH BELOW !! #
@@ -187,7 +193,7 @@ class main(QWidget):
         self.hslider2.setMinimum(0)
         self.hslider2.setMaximum(7)
         self.hslider2.setSingleStep(1)
-        self.hslider2.setValue(main.NUM_OF_LSB)
+        self.hslider2.setValue(main.ENC_NUM_OF_LSB)
         self.hslider2.setOrientation(QtCore.Qt.Horizontal)
         self.hslider2.move(228, 168)
         self.hslider2.resize(380, 22)
@@ -293,6 +299,30 @@ class main(QWidget):
         self.hprogress1_copy.setCursor(QtCore.Qt.ArrowCursor)
         self.hprogress1_copy.setToolTip("")
         self.hprogress1_copy.setEnabled(False)
+        self.label4_copy = QLabel(self.ta2)
+        self.label4_copy.setText("Number of LSB (0-7):")
+        self.label4_copy.move(108, 120)
+        self.label4_copy.resize(100, 22)
+        self.label4_copy.setCursor(QtCore.Qt.ArrowCursor)
+        self.label4_copy.setToolTip("")
+        self.hslider2_copy = QSlider(self.ta2)
+        self.hslider2_copy.setMinimum(0)
+        self.hslider2_copy.setMaximum(7)
+        self.hslider2_copy.setSingleStep(1)
+        self.hslider2_copy.setValue(main.DEC_NUM_OF_LSB)
+        self.hslider2_copy.setOrientation(QtCore.Qt.Horizontal)
+        self.hslider2_copy.move(228, 120)
+        self.hslider2_copy.resize(380, 22)
+        self.hslider2_copy.setCursor(QtCore.Qt.ArrowCursor)
+        self.hslider2_copy.setToolTip("")
+        self.hslider2_copy.valueChanged.connect(self.changedValue2)
+        self.ltext2_copy = QLineEdit(self.ta2)
+        self.ltext2_copy.setText("0")
+        self.ltext2_copy.move(628, 120)
+        self.ltext2_copy.resize(20, 22)
+        self.ltext2_copy.setCursor(QtCore.Qt.IBeamCursor)
+        self.ltext2_copy.setToolTip("")
+        self.ltext2_copy.setEnabled(False)
         self.button4_copy = QToolButton(self.ta2)
         self.button4_copy.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.button4_copy.setText("Decode")
@@ -344,25 +374,47 @@ class main(QWidget):
     # Encode logic
     # /// /// #
     def encode(self):
-        
+            # Check if PL > OBJ
             if (os.path.getsize(main.ENC_IMG_PL) > os.path.getsize(main.ENC_IMG_IPT)):
                 main.gui.text3.appendPlainText("[Error] Payload image size is larger than the object")
             else:
-                """ self.button4.setEnabled(False) """
-                secret_data = open(main.ENC_IMG_PL,"r")
-                data = secret_data.read()
-                # encode the data into the image
-                encoded_image = s_encode(image_name=main.ENC_IMG_IPT, secret_data=data)
-                secret_data.close()
-                # save the output image (encoded image)
-                cv2.imwrite(main.ENC_IMG_OUT, encoded_image)
+                # Check filetype
+                file_name, file_extension = os.path.splitext(main.ENC_IMG_IPT)
+                # Image Encode
+                if file_extension.lower() in main.FE_IMG:
+                    """ imgEncoder = Encoder(main.ENC_IMG_IPT)
+                    imgEncoder.setBitNumber(main.ENC_NUM_OF_LSB)
+                    imgEncoder.encode(get_stream(main.ENC_IMG_PL))
+                    imgEncoder.generateNewPic(main.ENC_IMG_OUT) """
+                    encode_png(source=main.ENC_IMG_IPT, payload=main.ENC_IMG_PL, dest=main.ENC_IMG_OUT, num_lsbs=main.ENC_NUM_OF_LSB)
+                elif file_extension.lower() in main.FE_AUD:
+                    encode_audio(main.ENC_IMG_IPT, main.ENC_IMG_OUT, main.ENC_IMG_PL, main.ENC_NUM_OF_LSB)
+                elif file_extension.lower() in main.FE_VID:
+                    VideoCoder.encode_video(VideoCoder(), main.ENC_IMG_IPT, main.ENC_IMG_PL, main.ENC_IMG_OUT, main.ENC_NUM_OF_LSB)
+                    
+                else:
+                    main.gui.text3.appendPlainText("[Error] Unknown input extension!")
     
     # /// /// #
     # Decode logic
     # /// /// #
     def decode(self):
-        decoded_data = s_decode(main.DEC_IMG_IPT)
-        main.gui.text3.appendPlainText("[Decode] " + decoded_data)
+        # Check filetype
+        file_name, file_extension = os.path.splitext(main.DEC_IMG_IPT)
+        # Image Encode
+        if file_extension.lower() in main.FE_IMG:
+            """ imgDecoder = Decoder(main.DEC_IMG_IPT)
+            imgDecoder.setBitNumber(main.DEC_NUM_OF_LSB)
+            imgDecoder.readPayload()
+            imgDecoder.extractEmbeddedToFile(main.DEC_IMG_OUT) """
+            decode_png(main.DEC_IMG_IPT, main.DEC_IMG_OUT, main.DEC_NUM_OF_LSB, 'txt')
+        elif file_extension.lower() in main.FE_AUD:
+            decode_audio(main.DEC_IMG_IPT, main.DEC_IMG_OUT, main.DEC_NUM_OF_LSB, 'file')
+        elif file_extension.lower() in main.FE_VID:
+            VideoCoder.decode_video(VideoCoder(), main.DEC_IMG_IPT, main.DEC_IMG_OUT, main.DEC_NUM_OF_LSB)
+        else:
+            main.gui.text3.appendPlainText("[Error] Unknown input extension!")
+            
 
     # /// /// #
     # File explorer events
@@ -394,11 +446,18 @@ class main(QWidget):
 
     # Slider on change
     def changedValue(self):
-        main.NUM_OF_LSB = self.hslider2.value()
-        self.ltext2.setText(str(main.NUM_OF_LSB))
-        main.gui.text3.appendPlainText("[Encode] Number of LSB: " + str(main.NUM_OF_LSB))
-        if main.NUM_OF_LSB > 3:
+        main.ENC_NUM_OF_LSB = self.hslider2.value()
+        self.ltext2.setText(str(main.ENC_NUM_OF_LSB))
+        main.gui.text3.appendPlainText("[Encode] Number of LSB: " + str(main.ENC_NUM_OF_LSB))
+        if main.ENC_NUM_OF_LSB > 3:
             main.gui.text3.appendPlainText("[Encode] !Warning: Higher LSB may reduce image quality")
+    def changedValue2(self):
+        main.DEC_NUM_OF_LSB = self.hslider2_copy.value()
+        self.ltext2_copy.setText(str(main.DEC_NUM_OF_LSB))
+        main.gui.text3.appendPlainText("[Decode] Number of LSB: " + str(main.DEC_NUM_OF_LSB))
+        if main.DEC_NUM_OF_LSB > 3:
+            main.gui.text3.appendPlainText("[Decode] !Warning: Higher LSB may reduce image quality")
+
     
     # /// /// #
     # File Dialog events
