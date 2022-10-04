@@ -1,3 +1,4 @@
+
 from tkinter import E
 import os
 import cv2
@@ -35,7 +36,7 @@ def png_max_bytes(image: cv2.Mat, num_lsbs) -> int:
     return image.shape[0] * image.shape[1] * 3 * num_lsbs // 8
 
 
-def encode_png(source, payload, dest,num_lsbs):
+def encode_png(source, payload, dest, num_lsbs):
     # error checking, and checking if file exists
     print('[*] Cover image URI is:', source, 'using', num_lsbs, 'bits.')
     if not os.path.exists(source):
@@ -121,12 +122,13 @@ def encode_png(source, payload, dest,num_lsbs):
         if payload_index >= data_len:
             break
 
-    cv2.imwrite(dest, cover_img)
+    saveto = dest
+    cv2.imwrite(saveto, cover_img)
     # print("payload encoded: ", payload_index, data_len)
-    return 0
+    return saveto
 
 
-def decode_png(source, dest, num_lsbs, decodeformat='file'):
+def decode_png(source, num_lsbs, decodeformat='file'):
     print('[*] Attempting to decode:', source, 'using', num_lsbs, 'bits.')
     # Store decoded characters to see the delimiter
     prevprev_char = ''
@@ -175,15 +177,6 @@ def decode_png(source, dest, num_lsbs, decodeformat='file'):
             # Trim excess
             decoded_bin_stream = decoded_bin_stream[:img_size]
 
-            # # Synch with teammate: don't rebuild using cv2, do this:
-            # # format as byte representation
-            # decoded_bin_stream = [decoded_bin_stream[index: index + 8]
-            #                       for index in range(0, len(decoded_bin_stream), 8)]
-            # # Generate file from stream
-            # extension = filestream.generate_from_stream(
-            #     decoded_string, "decoded_file.png")   # generate file from
-            # return extension
-
             # rebuild png.
             # Counter to track index in bin_stream
             bin_index = 0
@@ -201,7 +194,7 @@ def decode_png(source, dest, num_lsbs, decodeformat='file'):
                             decoded_data[row, pixel, rgb] = decoded_data[row, pixel, rgb] | (
                                 (int(decoded_bin_stream[bin_index]) << bit_index))
                             bin_index = bin_index + 1
-            extension = ".\\decoded\\decoded_image.png"
+            extension = "decoded_image.png"
             cv2.imwrite(extension, decoded_data)
             return extension
         else:
@@ -224,7 +217,7 @@ def decode_png(source, dest, num_lsbs, decodeformat='file'):
                 prev_char = current_char        # update previous char for stop code identification
                 decoded_string += byte
             extension = filestream.generate_from_stream(
-                decoded_string, dest)   # generate file from
+                decoded_string, "decoded_file.png")   # generate file from
             return extension
     else:
         # Decoding plaintext string in png file, no need for first 4 bit file identifier
@@ -241,7 +234,7 @@ def decode_png(source, dest, num_lsbs, decodeformat='file'):
                 prev_char = current_char
                 decoded_string += current_char
 
-        with open(dest, 'w') as newfile:
+        with open("Decodepokemon.png", 'w') as newfile:
             newfile.write(decoded_string)
             newfile.close()
         print('[*] Successfully decoded and exported to')
@@ -272,3 +265,57 @@ def png_to_bits(payload, num_lsbs: int) -> np.ndarray:
 
     # Return the bits of the png.
     return payload_bits
+
+
+""" if __name__ == "__main__":
+
+    payload_str = "This is a top secret message which is very very long."  # input str
+    payload_txt = ".\\payloads\\short_text.txt"  # short text
+    payload_txt2 = ".\\payloads\\long_text.txt"  # long text
+
+    # payload_doc = ".\\payloads\\doc_file.doc" # doc file is annoying, unless we convert and etc using textreact
+    payload_docx = ".\\payloads\\docx_file.docx"
+
+    payload_wav = ".\\payloads\\beep.wav"
+
+    payload_mp4 = ".\\payloads\\countdown.mp4"
+
+    chao_png = ".\\imgs\\chao.png"  # chao, small
+    whale_png = ".\\imgs\\whale.png"  # whale, small
+    bread_png = ".\\imgs\\bread.png"  # bread, medium
+    pokemon_png = ".\\imgs\\pokemon.png"  # pikachu, big
+    pixil_1_png = ".\\imgs\\pixil_1.png"  # pixil_1, 3x3
+    pixil_2_png = ".\\imgs\\pixil_2.png"  # pixil_2, 3x3
+
+    encoded_chao_png = ".\\encoded\\stego_chao.png"
+    encoded_pokemon_png = ".\\encoded\\stego_pokemon.png"
+    encoded_whale_png = ".\\encoded\\stego_whale.png"
+    encoded_pixil_png = ".\\encoded\\stego_pixil.png"
+    encoded_bread_png = ".\\encoded\\stego_bread.png"
+
+    encoded_wav = ".\\encoded\\encoded.wav"
+
+    output_file = encoded_pokemon_png
+
+    encoded_bread = ".\\decoded\\decoded_bread.png"
+    decoded_chao = ".\\decoded\\decoded_chao.png"
+    decoded_pokemon = ".\\decoded\\decoded_pokemon.png"
+    decoded_whale = ".\\decoded\\decoded_whale.png"
+
+    decoded_wav = ".\\decoded\\decoded.wav"
+
+    decoded_image = decoded_chao  # match the payload thnx
+
+    num_lsbs = int(input("Enter number of LSBs to use:\n"))
+
+    # encode the data into the image
+    encoded_image = encode_png(
+        source="pokemon.png", payload="payload2.txt", num_lsbs=num_lsbs)
+
+    # For png
+    # decode the payload from the image
+    decoded_data = decode_png(encoded_image, num_lsbs)
+
+    print("decoded_data: ", decoded_data)
+
+    print("end of program") """

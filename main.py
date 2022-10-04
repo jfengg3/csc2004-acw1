@@ -407,7 +407,7 @@ class main(QWidget):
             imgDecoder.setBitNumber(main.DEC_NUM_OF_LSB)
             imgDecoder.readPayload()
             imgDecoder.extractEmbeddedToFile(main.DEC_IMG_OUT) """
-            decode_png(main.DEC_IMG_IPT, main.DEC_IMG_OUT, main.DEC_NUM_OF_LSB, 'txt')
+            decode_png(main.DEC_IMG_IPT, main.DEC_NUM_OF_LSB)
         elif file_extension.lower() in main.FE_AUD:
             decode_audio(main.DEC_IMG_IPT, main.DEC_IMG_OUT, main.DEC_NUM_OF_LSB, 'file')
         elif file_extension.lower() in main.FE_VID:
